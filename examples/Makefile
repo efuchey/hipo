@@ -46,6 +46,9 @@ readJson: readJson.o
 readFile: readFile.o
 	$(CXX) -o readFile.exe $<   $(HIPOLIBS) $(LZ4LIBS)
 
+readFile_alert: readFile_alert.o
+	$(CXX) -o readFile_alert.exe $<   $(HIPOLIBS) $(LZ4LIBS)
+
 readFusion: readFusion.o
 	$(CXX) -o readFusion.exe $<   $(HIPOLIBS) $(LZ4LIBS)
 
