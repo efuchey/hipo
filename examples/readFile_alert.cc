@@ -18,7 +18,7 @@
 #include <math.h>
 #include "reader.h"
 #include "twig.h"
-
+#define radtodeg 57.295779513
 
 int main(int argc, char** argv) {
 
@@ -41,29 +41,17 @@ int main(int argc, char** argv) {
 
    factory.show();
 
-   twig::h1d  hMCPx(100,-2.0,2.0); // declare a 1D histogram
-   twig::h1d  hMCPy(100,-2.0,2.0); // declare a 1D histogram
-   twig::h1d  hMCPz(100, 0.5, 4.5); // declare a 1D histogram
+   twig::h1d  hmcP(100, 0.0, 2.0); // declare a 1D histogram
+   twig::h1d  hmcTheta(75, 50, 125.0); // declare a 1D histogram
+   twig::h1d  hmcPhi(90,-180.0,180.0); // declare a 1D histogram
+   
+   twig::h1d  htrackP(100, 0.0, 2.0); // declare a 1D histogram
+   twig::h1d  htrackTheta(75, 50, 125); // declare a 1D histogram
+   twig::h1d  htrackPhi(90, -180.0, 180.0); // declare a 1D histogram
 
-   twig::h1d  hMCtheta(90,0,90.0); // declare a 1D histogram
-   twig::h1d  hMCphi(90,-180.0,180.0); // declare a 1D histogram
-   twig::h1d  hMCp(100, 0.5, 4.5); // declare a 1D histogram
-   
-   twig::h1d  hMCtheta_p(90,0,90.0); // declare a 1D histogram
-   twig::h1d  hMCphi_p(90,-180.0,180.0); // declare a 1D histogram
-   twig::h1d  hMCp_p(100, 0.5, 4.5); // declare a 1D histogram
-   
-   twig::h1d  hHitTDC(100, -10, 10);
-   
-   twig::h1d  hTrackPx(100,-0.5,0.5); // declare a 1D histogram
-   twig::h1d  hTrackPy(100,-0.5,0.5); // declare a 1D histogram
-   twig::h1d  hTrackPz(100, 0.0,1.0); // declare a 1D histogram
-
-   // hipo::bank  particles(factory.getSchema("event::particle"));
-   // hipo::bank  detectors(factory.getSchema("event::detector"));
    hipo::bank  MCparticles(factory.getSchema("MC::Particle"));
    hipo::bank  hits(factory.getSchema("AHDC::Hits"));
-   hipo::bank  tracks(factory.getSchema("AHDC::KFTrack"));
+   hipo::bank  tracks(factory.getSchema("AHDC::Track"));
    
    hipo::event      event;
 
@@ -74,23 +62,6 @@ int main(int argc, char** argv) {
    while(reader.next()==true){
       reader.read(event);
       
-      // event.getStructure(particles);
-      // event.getStructure(detectors);
-
-      // particles.show();
-      // detectors.show();
-
-      // int nrows = particles.getRows();
-      // printf("---------- PARTICLE BANK CONTENT -------\n");
-      // for(int row = 0; row < nrows; row++){
-      //    int   pid = particles.getInt("pid",row);
-      //    float  px = particles.getFloat("px",row);
-      //    float  py = particles.getFloat("py",row);
-      //    float  pz = particles.getFloat("pz",row);
-      //    printf("%6d : %6d %8.4f %8.4f %8.4f\n",row,pid,px,py,pz);
-      // }
-      // printf("---------- END OF PARTICLE BANK -------\n");
-      
       event.getStructure(MCparticles);
       event.getStructure(hits);
       event.getStructure(tracks);
@@ -99,7 +70,7 @@ int main(int argc, char** argv) {
       float  px;
       float  py;
       float  pz;
-      float tdc;
+      int pid;
       
       float theta;
       float phi;
@@ -107,25 +78,29 @@ int main(int argc, char** argv) {
       
       nrows = MCparticles.getRows();
       for(int row = 0; row < nrows; row++){
+	pid = MCparticles.getInt("pid",row);
 	px = MCparticles.getFloat("px",row);
 	py = MCparticles.getFloat("py",row);
 	pz = MCparticles.getFloat("pz",row);
 	
 	p = sqrt(px*px+py*py+pz*pz);
-	theta = acos(pz/p);
-	phi = atan2(px, py);
+	theta = acos(pz/p)*radtodeg;
+	phi = atan2(px, py)*radtodeg;
 
-	hMCPx.fill(px);
-	hMCPy.fill(py);
-	hMCPz.fill(pz);
+	if(pid==2212){
+	  hmcP.fill(p);
+	  hmcTheta.fill(theta);
+	  hmcPhi.fill(phi);
+	}else{
+	  printf("%6d : %6d %8.4f %8.4f %8.4f\n",row,pid,px,py,pz);
+	}
       }
-      
-      nrows = hits.getRows();
-      for(int row = 0; row < nrows; row++){
-	tdc = hits.getFloat("tdc",row);
+      // nrows = hits.getRows();
+      // for(int row = 0; row < nrows; row++){
+      // 	tdc = hits.getFloat("tdc",row);
 	
-	hHitTDC.fill(tdc);
-      }
+      // 	hHitTDC.fill(tdc);
+      // }
       
       nrows = tracks.getRows();
       for(int row = 0; row < nrows; row++){
@@ -133,21 +108,27 @@ int main(int argc, char** argv) {
 	py = tracks.getFloat("py",row);
 	pz = tracks.getFloat("pz",row);
 	
-	hTrackPx.fill(px);
-	hTrackPy.fill(py);
-	hTrackPz.fill(pz);
+	p = sqrt(px*px+py*py+pz*pz);
+	theta = acos(pz/p)*radtodeg;
+	phi = atan2(px, py)*radtodeg;
+
+	printf("%6d : %8.4f %8.4f %8.4f => P = %8.4f\n",row,px,py,pz, p);	
+	
+	htrackP.fill(p);
+	htrackTheta.fill(theta);
+	htrackPhi.fill(phi);
       }
       
       counter++;
    }
    printf("processed events = %d\n",counter);
-   hMCPx.print();
-   hMCPy.print();
-   hMCPz.print();
-   hHitTDC.print();
-   hTrackPx.print();
-   hTrackPy.print();
-   hTrackPz.print();
+   hmcP.print();
+   htrackP.print();
+   hmcTheta.print();
+   htrackTheta.print();
+   hmcPhi.print();
+   htrackPhi.print();
+   
    
 }
 //### END OF GENERATED CODE

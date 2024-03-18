@@ -19,13 +19,16 @@ LD        := g++
 LDFLAGS   := $(ROOTLDFLAGS)
 
 
-all: converter benchmark
+all: converter benchmark converter_alertbanks
 
 hist2root: hist2root.o
 	$(CXX) -o hist2root.exe $< $(ROOTCFLAGS) $(ROOTLDFLAGS) $(HIPOLIBS) $(LZ4LIBS) $(ROOTLIBS)
 
 converter: converter.o
 	$(CXX) -o converter.exe $< $(ROOTCFLAGS) $(ROOTLDFLAGS) $(HIPOLIBS) $(LZ4LIBS) $(ROOTLIBS)
+
+converter_alertbanks: converter_alertbanks.o
+	$(CXX) -o converter_alertbanks.exe $< $(ROOTCFLAGS) $(ROOTLDFLAGS) $(HIPOLIBS) $(LZ4LIBS) $(ROOTLIBS)
 
 simulation2hipo: simulation2hipo.o
 	$(CXX) -o simulation2hipo.exe $< $(ROOTCFLAGS) $(ROOTLDFLAGS) $(HIPOLIBS) $(LZ4LIBS) $(ROOTLIBS)
